@@ -1,6 +1,7 @@
 import asyncio
 import logging
 
+import asyncpg
 from aiogram import Bot, Dispatcher
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
 from aiogram.contrib.fsm_storage.redis import RedisStorage2
@@ -11,12 +12,16 @@ from tgbot.handlers.admin import register_admin
 from tgbot.handlers.echo import register_echo
 from tgbot.handlers.user import register_user
 from tgbot.middlewares.environment import EnvironmentMiddleware
+from tgbot.middlewares.postgres_db import PostgresDbMiddleware
 
 logger = logging.getLogger(__name__)
 
 
-def register_all_middlewares(dp, config):
+async def register_all_middlewares(dp, config):
+    pool = await asyncpg.create_pool(dsn=config.db.postgres_dsn)
+
     dp.setup_middleware(EnvironmentMiddleware(config=config))
+    dp.setup_middleware(PostgresDbMiddleware(pool=pool))
 
 
 def register_all_filters(dp):
@@ -44,7 +49,7 @@ async def main():
 
     bot['config'] = config
 
-    register_all_middlewares(dp, config)
+    await register_all_middlewares(dp, config)
     register_all_filters(dp)
     register_all_handlers(dp)
 

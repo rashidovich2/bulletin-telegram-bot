@@ -9,6 +9,18 @@ class DbConfig:
     password: str
     user: str
     database: str
+    port: int
+    postgres_dsn: str
+
+    def __init__(self, host, password, user, database, port):
+        self.host = host
+        self.password = password
+        self.user = user
+        self.database = database
+        self.port = port
+
+        postgres_dsn = f"postgres://{user}:{password}@{host}:{port}/{database}"
+        self.postgres_dsn = postgres_dsn
 
 
 @dataclass
@@ -44,7 +56,8 @@ def load_config(path: str = None):
             host=env.str('DB_HOST'),
             password=env.str('DB_PASS'),
             user=env.str('DB_USER'),
-            database=env.str('DB_NAME')
+            database=env.str('DB_NAME'),
+            port=env.int('DB_PORT')
         ),
         misc=Miscellaneous()
     )
