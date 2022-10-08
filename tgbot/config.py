@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 
+import yaml
 from environs import Env
 
 
@@ -30,8 +31,41 @@ class TgBot:
     use_redis: bool
 
 
+# Texts classes
+@dataclass
+class ButtonsTexts:
+    rent: str
+    sell: str
+    inline_back: str
+    inline_forward: str
+
+
+@dataclass
+class MessagesPartsText:
+    what_object: str
+    cost: str
+    photo: str
+    description: str
+
+
+@dataclass
+class MessagesText:
+    start_msg: str
+    success_msg: str
+    parts: MessagesPartsText
+
+
+@dataclass
+class Texts:
+    object_types: list[str]
+    buttons: ButtonsTexts
+    messages: MessagesText
+
+
+# Config
 @dataclass
 class Miscellaneous:
+    texts: Texts
     other_params: str = None
 
 
@@ -42,9 +76,18 @@ class Config:
     misc: Miscellaneous
 
 
-def load_config(path: str = None):
+def load_config(path: str = None, texts_path=None):
     env = Env()
     env.read_env(path)
+
+    texts = None
+
+    if texts_path is not None:
+        with open(texts_path, "r", encoding="utf-8") as stream:
+            try:
+                texts = yaml.safe_load(stream)
+            except yaml.YAMLError as exc:
+                print(exc)
 
     return Config(
         tg_bot=TgBot(
@@ -59,5 +102,26 @@ def load_config(path: str = None):
             database=env.str('DB_NAME'),
             port=env.int('DB_PORT')
         ),
-        misc=Miscellaneous()
+        misc=Miscellaneous(
+            texts=Texts(
+                object_types=texts['object_types'],
+                buttons=ButtonsTexts(
+                    rent=texts['buttons']['rent'],
+                    sell=texts['buttons']['sell'],
+                    inline_back=texts['buttons']['inline_back'],
+                    inline_forward=texts['buttons']['inline_forward']
+                ),
+                messages=MessagesText(
+                    start_msg=texts['messages']['start_msg'],
+                    success_msg=texts['messages']['success_msg'],
+                    parts=MessagesPartsText(
+                        what_object=texts['messages']['parts']['what_object'],
+                        cost=texts['messages']['parts']['cost'],
+                        photo=texts['messages']['parts']['photo'],
+                        description=texts['messages']['parts']['description']
+                    )
+                )
+            )
+        ),
+
     )
