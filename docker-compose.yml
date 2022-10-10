@@ -30,6 +30,7 @@ services:
       PGDATA: "/var/data/pgdata"
     volumes:
     - ./somedata/pgdata:/var/data/pgdata
+    - ./create_db.sql:/create_db.sql
     env_file:
     - ".env"
     networks:
