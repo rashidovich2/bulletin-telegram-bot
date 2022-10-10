@@ -15,18 +15,8 @@ from tgbot.services.repository import Repo
 
 async def user_start(message: Message):
     cfg: Config = ctx_data.get()['config']
-    member = await message.bot.get_chat_member(cfg.tg_bot.channel_id, message.from_user.id)
-
-    if member.status == "member":
-        cfg: Config = ctx_data.get()['config']
-        menu = get_menu(cfg)
-        await message.reply(cfg.misc.texts.messages.start_msg, reply_markup=menu)
-    else:
-        channel_href = f"t.me/{cfg.tg_bot.channel_tag}"
-
-        await message.reply(
-            text=cfg.misc.texts.messages.not_in_channel_msg.format(channel_href)
-        )
+    menu = get_menu(cfg)
+    await message.reply(cfg.misc.texts.messages.start_msg, reply_markup=menu)
 
 
 async def sell_command(message: Message):
