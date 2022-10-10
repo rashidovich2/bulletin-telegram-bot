@@ -12,6 +12,7 @@ delete_photo_cd = CallbackData("delete_photo", "ad_id")
 desc_cd = CallbackData("desc", "ad_id")
 cost_cd = CallbackData("cost", "ad_id")
 publish_cd = CallbackData("publish", "ad_id")
+confirm_publish_cd = CallbackData("confirm_publish", "ad_id", "confirm")
 revoke_cd = CallbackData("cancel_publish", "ad_id", "msg_ids")
 
 
@@ -79,12 +80,28 @@ async def revoke_button(cfg: Config, ad_id, msg_ids: list[str]):
     return markup
 
 
+async def confirm_buttons(cfg: Config, ad_id):
+    markup = InlineKeyboardMarkup()
+
+    markup.row(
+        InlineKeyboardButton(text="Да", callback_data=confirm_publish_cd.new(ad_id=ad_id, confirm="1")),
+        InlineKeyboardButton(text="Нет", callback_data=confirm_publish_cd.new(ad_id=ad_id, confirm="0")),
+    )
+
+    return markup
+
+
 async def ad_navigate(cfg: Config, ad_id, category, photo="0"):
     CURRENT_LEVEL = 1
     markup = InlineKeyboardMarkup()
 
+    if photo == "0":
+        photo_text = cfg.misc.texts.buttons.add_photo
+    else:
+        photo_text = cfg.misc.texts.buttons.edit_photo
+
     photo_markup = InlineKeyboardButton(
-        text=cfg.misc.texts.buttons.add_photo,
+        text=photo_text,
         callback_data=photo_cd.new(ad_id=ad_id)
     )
 

@@ -6,7 +6,8 @@ from aiogram.types import Message, CallbackQuery, MediaGroup, InputFile, InputMe
 from tgbot.config import Config
 from tgbot.keyboards.inline import ad_categories_keyboard, ad_navigate, ad_cd, photo_cd, desc_cd, cost_cd, \
     new_cost_cd, \
-    ad_categories_change_keyboard, photo_navigate, get_photo_cd, delete_photo_cd, publish_cd, revoke_button, revoke_cd
+    ad_categories_change_keyboard, photo_navigate, get_photo_cd, delete_photo_cd, publish_cd, revoke_button, revoke_cd, \
+    confirm_publish_cd, confirm_buttons
 from tgbot.keyboards.reply import get_menu
 from tgbot.misc.utils import get_category_with_index, make_info_text
 from tgbot.services.repository import Repo
@@ -57,7 +58,7 @@ async def category_navigate(callback: CallbackQuery, state: FSMContext, callback
     else:
         if len(photo_ids) > 0:
             mg = MediaGroup()
-            for photo_id in photo_ids:
+            for photo_id in photo_ids[:9]:
                 mg.attach_photo(photo=photo_id)
             media_group = mg.to_python()
         else:
@@ -80,6 +81,7 @@ async def category_navigate(callback: CallbackQuery, state: FSMContext, callback
 
     await callback.answer()
     await callback.message.edit_text(text=make_info_text(cfg, ad, callback.from_user), reply_markup=inline_markup)
+    await state.reset_state()
 
 
 async def change_photo(callback: CallbackQuery, state: FSMContext, callback_data: dict):
@@ -399,26 +401,69 @@ async def publish_ad(callback: CallbackQuery, state: FSMContext, callback_data: 
     media_group = ad.media_group
     media_group[0]["caption"] = make_info_text(cfg, ad, callback.from_user)
 
-    channel_msgs = await callback.bot.send_media_group(
-        chat_id=cfg.tg_bot.channel_id,
-        media=media_group
-    )
+    msgs = await callback.message.reply_media_group(media_group)
 
-    await repo.publish_ad(ad_id)
+    delete_msg_ids = []
+    for msg in msgs:
+        delete_msg_ids.append(msg.message_id)
 
-    href = f"t.me/{cfg.tg_bot.channel_tag}/{channel_msgs[0].message_id}"
+    confirm_markup = await confirm_buttons(cfg, ad_id)
 
-    msg_ids = []
-    for channel_msg in channel_msgs:
-        msg_ids.append(str(channel_msg.message_id))
-
-    delete_markup = await revoke_button(cfg, ad_id, msg_ids)
-
+    await state.set_state("confirm_ad")
+    await state.update_data(delete_ids=delete_msg_ids)
     await callback.answer()
     await callback.message.answer(
-        text=cfg.misc.texts.messages.success_msg.format(href),
-        reply_markup=delete_markup
+        text=cfg.misc.texts.messages.confirm,
+        reply_markup=confirm_markup
     )
+
+
+async def confirm_ad(callback: CallbackQuery, state: FSMContext, callback_data: dict):
+    mw_data = ctx_data.get()
+    cfg: Config = mw_data['config']
+    repo: Repo = mw_data['repo']
+
+    ad_id = callback_data.get("ad_id")
+    confirm = callback_data.get("confirm")
+
+    data = await state.get_data()
+    delete_ids: list[int] = data.get("delete_ids")
+    delete_ids.append(callback.message.message_id)
+
+    if confirm == "1":
+        ad = await repo.get_ad(ad_id)
+
+        media_group = ad.media_group
+        media_group[0]["caption"] = make_info_text(cfg, ad, callback.from_user)
+
+        channel_msgs = await callback.bot.send_media_group(
+            chat_id=cfg.tg_bot.channel_id,
+            media=media_group
+        )
+
+        await repo.publish_ad(ad_id)
+
+        href = f"t.me/{cfg.tg_bot.channel_tag}/{channel_msgs[0].message_id}"
+
+        msg_ids = []
+        for channel_msg in channel_msgs:
+            msg_ids.append(str(channel_msg.message_id))
+
+        delete_markup = await revoke_button(cfg, ad_id, msg_ids)
+
+        for msg_id in delete_ids:
+            await callback.bot.delete_message(chat_id=callback.from_user.id, message_id=msg_id)
+
+        await callback.answer()
+        await callback.message.answer(
+            text=cfg.misc.texts.messages.success_msg.format(href),
+            reply_markup=delete_markup
+        )
+    else:
+        await callback.answer()
+
+        for msg_id in delete_ids:
+            await callback.bot.delete_message(chat_id=callback.from_user.id, message_id=msg_id)
 
 
 async def revoke_ad(callback: CallbackQuery, callback_data: dict):
@@ -459,6 +504,7 @@ def register_user(dp: Dispatcher, cfg: Config):
     dp.register_callback_query_handler(change_description, desc_cd.filter(), state="*")
     dp.register_callback_query_handler(change_cost, cost_cd.filter(), state="*")
     dp.register_callback_query_handler(publish_ad, publish_cd.filter(), state="*")
+    dp.register_callback_query_handler(confirm_ad, confirm_publish_cd.filter(), state="confirm_ad")
     dp.register_callback_query_handler(revoke_ad, revoke_cd.filter(), state="*")
 
     dp.register_message_handler(wait_description, state="wait_description")

@@ -62,6 +62,7 @@ class MessagesPartsText:
 class MessagesText:
     sell: str
     rent: str
+    confirm: str
     start_msg: str
     success_msg: str
     revoked_msg: str
@@ -150,6 +151,7 @@ def load_config(path: str = None, texts_path=None):
                 messages=MessagesText(
                     sell=texts['messages']['sell'],
                     rent=texts['messages']['rent'],
+                    confirm=texts['messages']['confirm'],
                     start_msg=texts['messages']['start_msg'],
                     success_msg=texts['messages']['success_msg'],
                     revoked_msg=texts['messages']['revoked_msg'],
