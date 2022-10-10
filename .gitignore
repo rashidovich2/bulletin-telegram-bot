@@ -63,4 +63,4 @@ venv.bak/
 .env
 
 # Postgres data
-pgdata
+somedata/pgdata

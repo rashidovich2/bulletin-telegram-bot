@@ -26,3 +26,16 @@ DB_NAME=exampleDBName
 DB_HOST=127.0.0.1
 DB_PORT=5432
 ```
+
+## Only first start
+```sh
+docker-compose up -d --build
+docker exec -it <PASS BOT_CONTAINER_NAME>-db bash
+psql -U <PASS DB_USER> -d <PASS DB_NAME> -f /create_db.sql
+```
+
+## Restart
+```sh
+docker-compose down
+docker-compose up -d --build
+```

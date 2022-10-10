@@ -1,11 +1,11 @@
 FROM python:3.9-buster
 ENV BOT_NAME=$BOT_NAME
 
-WORKDIR /usr/src/app/"${BOT_NAME}-tg_bot"
+WORKDIR /usr/src/app
 
-COPY requirements.txt /usr/src/app/"${BOT_NAME}-tg_bot"
-RUN pip install -r /usr/src/app/"${BOT_NAME}-tg_bot"/requirements.txt
+COPY requirements.txt /usr/src/app
+RUN pip install -r /usr/src/app/requirements.txt
 
-COPY bot.py /usr/src/app/"${BOT_NAME}-tg_bot"
-COPY tgbot /usr/src/app/"${BOT_NAME}-tg_bot"
-COPY texts.yml /usr/src/app/"${BOT_NAME}-tg_bot"
+COPY bot.py /usr/src/app
+COPY tgbot /usr/src/app
+COPY texts.yml /usr/src/app
