@@ -7,12 +7,12 @@ services:
     stop_signal: SIGINT
     build:
       context: .
-    working_dir: "/usr/src/app/${BOT_NAME}-tg_bot"
+    working_dir: "/usr/src/app"
     volumes:
-    - "bot.py:/usr/src/app/${BOT_NAME}-tg_bot/bot.py"
-    - "tgbot:/usr/src/app/${BOT_NAME}-tg_bot/tgbot"
-    - ".env:/usr/src/app/${BOT_NAME}-tg_bot/.env"
-    - "texts.yml:/usr/src/app/${BOT_NAME}-tg_bot/texts.yml"
+    - "./bot.py:/usr/src/app/bot.py"
+    - "./tgbot:/usr/src/app/tgbot"
+    - "./.env:/usr/src/app/.env"
+    - "./texts.yml:/usr/src/app/texts.yml"
     command: python3 -m bot
     restart: always
     env_file:
@@ -29,7 +29,7 @@ services:
       POSTGRES_DB: "${DB_NAME}"
       PGDATA: "/var/data/pgdata"
     volumes:
-    - ./pgdata:/var/data/pgdata
+    - ./somedata/pgdata:/var/data/pgdata
     env_file:
     - ".env"
     networks:
