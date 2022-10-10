@@ -28,9 +28,9 @@ def register_all_filters(dp):
     dp.filters_factory.bind(AdminFilter)
 
 
-def register_all_handlers(dp):
+def register_all_handlers(dp, cfg):
     # register_admin(dp)
-    register_user(dp)
+    register_user(dp, cfg)
 
     # register_echo(dp)
 
@@ -51,7 +51,7 @@ async def main():
 
     await register_all_middlewares(dp, config)
     register_all_filters(dp)
-    register_all_handlers(dp)
+    register_all_handlers(dp, config)
 
     # start
     try:

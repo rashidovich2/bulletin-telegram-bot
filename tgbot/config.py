@@ -26,6 +26,8 @@ class DbConfig:
 
 @dataclass
 class TgBot:
+    channel_id: int
+    channel_tag: str
     token: str
     admin_ids: list[int]
     use_redis: bool
@@ -36,8 +38,16 @@ class TgBot:
 class ButtonsTexts:
     rent: str
     sell: str
-    inline_back: str
-    inline_forward: str
+    last_ad: str
+    publish: str
+    revoke: str
+    add_photo: str
+    show_photo: str
+    delete_photo: str
+    edit_photo: str
+    edit_description: str
+    edit_cost: str
+    edit_category: str
 
 
 @dataclass
@@ -50,9 +60,23 @@ class MessagesPartsText:
 
 @dataclass
 class MessagesText:
+    sell: str
+    rent: str
     start_msg: str
     success_msg: str
+    revoked_msg: str
     parts: MessagesPartsText
+
+
+@dataclass()
+class DescriptionLengths:
+    min: int
+    max: int
+
+
+@dataclass()
+class Lenghts:
+    description: DescriptionLengths
 
 
 @dataclass
@@ -60,6 +84,8 @@ class Texts:
     object_types: list[str]
     buttons: ButtonsTexts
     messages: MessagesText
+    lengths: Lenghts
+    ad_message: str
 
 
 # Config
@@ -92,6 +118,8 @@ def load_config(path: str = None, texts_path=None):
     return Config(
         tg_bot=TgBot(
             token=env.str("BOT_TOKEN"),
+            channel_id=env.int("CHANNEL_ID"),
+            channel_tag=env.str("CHANNEL_TAG"),
             admin_ids=list(map(int, env.list("ADMINS"))),
             use_redis=env.bool("USE_REDIS"),
         ),
@@ -108,19 +136,37 @@ def load_config(path: str = None, texts_path=None):
                 buttons=ButtonsTexts(
                     rent=texts['buttons']['rent'],
                     sell=texts['buttons']['sell'],
-                    inline_back=texts['buttons']['inline_back'],
-                    inline_forward=texts['buttons']['inline_forward']
+                    last_ad=texts['buttons']['last_ad'],
+                    publish=texts['buttons']['publish'],
+                    revoke=texts['buttons']['revoke'],
+                    add_photo=texts['buttons']['add_photo'],
+                    show_photo=texts['buttons']['show_photo'],
+                    delete_photo=texts['buttons']['delete_photo'],
+                    edit_photo=texts['buttons']['edit_photo'],
+                    edit_description=texts['buttons']['edit_description'],
+                    edit_cost=texts['buttons']['edit_cost'],
+                    edit_category=texts['buttons']['edit_category']
                 ),
                 messages=MessagesText(
+                    sell=texts['messages']['sell'],
+                    rent=texts['messages']['rent'],
                     start_msg=texts['messages']['start_msg'],
                     success_msg=texts['messages']['success_msg'],
+                    revoked_msg=texts['messages']['revoked_msg'],
                     parts=MessagesPartsText(
                         what_object=texts['messages']['parts']['what_object'],
                         cost=texts['messages']['parts']['cost'],
                         photo=texts['messages']['parts']['photo'],
                         description=texts['messages']['parts']['description']
                     )
-                )
+                ),
+                lengths=Lenghts(
+                    description=DescriptionLengths(
+                        min=texts['lengths']['description']['min'],
+                        max=texts['lengths']['description']['max']
+                    )
+                ),
+                ad_message=texts['ad_message'],
             )
         ),
 
