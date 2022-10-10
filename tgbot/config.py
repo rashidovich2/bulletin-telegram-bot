@@ -66,6 +66,7 @@ class MessagesText:
     start_msg: str
     success_msg: str
     revoked_msg: str
+    not_in_channel_msg: str
     parts: MessagesPartsText
 
 
@@ -155,6 +156,7 @@ def load_config(path: str = None, texts_path=None):
                     start_msg=texts['messages']['start_msg'],
                     success_msg=texts['messages']['success_msg'],
                     revoked_msg=texts['messages']['revoked_msg'],
+                    not_in_channel_msg=texts['messages']['not_in_channel_msg'],
                     parts=MessagesPartsText(
                         what_object=texts['messages']['parts']['what_object'],
                         cost=texts['messages']['parts']['cost'],
