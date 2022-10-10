@@ -23,7 +23,7 @@ CHANNEL_TAG=channel_tag
 DB_USER=exampleDBUserName
 DB_PASS=exampleDBPassword
 DB_NAME=exampleDBName
-DB_HOST=127.0.0.1
+DB_HOST=db # If use our docker-compose, not changed this!
 DB_PORT=5432
 ```
 
