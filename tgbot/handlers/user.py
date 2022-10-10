@@ -398,10 +398,19 @@ async def publish_ad(callback: CallbackQuery, state: FSMContext, callback_data: 
     ad_id = callback_data.get("ad_id")
     ad = await repo.get_ad(ad_id)
 
-    media_group = ad.media_group
-    media_group[0]["caption"] = make_info_text(cfg, ad, callback.from_user)
+    if len(ad.media_group) > 0:
+        media_group = ad.media_group
+        media_group[0]["caption"] = make_info_text(cfg, ad, callback.from_user)
 
-    msgs = await callback.message.reply_media_group(media_group)
+        msgs = await callback.message.reply_media_group(
+            media=media_group
+        )
+    else:
+        msgs = []
+        msg = await callback.message.answer(
+            text=make_info_text(cfg, ad, callback.from_user)
+        )
+        msgs.append(msg)
 
     delete_msg_ids = []
     for msg in msgs:
@@ -433,13 +442,21 @@ async def confirm_ad(callback: CallbackQuery, state: FSMContext, callback_data: 
     if confirm == "1":
         ad = await repo.get_ad(ad_id)
 
-        media_group = ad.media_group
-        media_group[0]["caption"] = make_info_text(cfg, ad, callback.from_user)
+        if len(ad.media_group) > 0:
+            media_group = ad.media_group
+            media_group[0]["caption"] = make_info_text(cfg, ad, callback.from_user)
 
-        channel_msgs = await callback.bot.send_media_group(
-            chat_id=cfg.tg_bot.channel_id,
-            media=media_group
-        )
+            channel_msgs = await callback.bot.send_media_group(
+                chat_id=cfg.tg_bot.channel_id,
+                media=media_group
+            )
+        else:
+            channel_msgs = []
+            channel_msg = await callback.bot.send_message(
+                chat_id=cfg.tg_bot.channel_id,
+                text=make_info_text(cfg, ad, callback.from_user)
+            )
+            channel_msgs.append(channel_msg)
 
         await repo.publish_ad(ad_id)
 
