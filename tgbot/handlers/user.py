@@ -87,6 +87,10 @@ async def category_navigate(callback: CallbackQuery, state: FSMContext, callback
 
         await callback.answer()
         state_name = await state.get_state()
+
+        if state_name == "wait_new_photo" or state_name == "wait_photo":
+            await callback.message.delete_reply_markup()
+
         if state_name == "navigate_category_change":
             await callback.message.edit_text(
                 text=make_info_text(cfg, ad, callback.from_user),
