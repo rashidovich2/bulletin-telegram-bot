@@ -48,6 +48,8 @@ class ButtonsTexts:
     edit_description: str
     edit_cost: str
     edit_category: str
+    cancel: str
+    ready: str
 
 
 @dataclass
@@ -151,7 +153,9 @@ def load_config(path: str = None, texts_path=None):
                     edit_photo=texts['buttons']['edit_photo'],
                     edit_description=texts['buttons']['edit_description'],
                     edit_cost=texts['buttons']['edit_cost'],
-                    edit_category=texts['buttons']['edit_category']
+                    edit_category=texts['buttons']['edit_category'],
+                    cancel=texts['buttons']['cancel'],
+                    ready=texts['buttons']['ready']
                 ),
                 messages=MessagesText(
                     sell=texts['messages']['sell'],

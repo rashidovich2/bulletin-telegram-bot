@@ -61,7 +61,7 @@ async def photo_navigate(cfg: Config, ad_id, category):
 
     callback_data = make_callback_data(level=1, ad_id=ad_id, category=category)
     markup.row(
-        InlineKeyboardButton(text="Готово", callback_data=callback_data)
+        InlineKeyboardButton(text=cfg.misc.texts.buttons.ready, callback_data=callback_data)
     )
 
     return markup

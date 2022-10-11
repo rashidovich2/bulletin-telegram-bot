@@ -16,6 +16,8 @@ buttons:
   edit_description: "Редактировать описание"
   edit_cost: "Указать другую цену"
   edit_category: "Выбрать другой объект"
+  cancel: "Отмена"
+  ready: "Готово"
 messages:
   sell: "Продажа"
   rent: "Сдача в аренду"
