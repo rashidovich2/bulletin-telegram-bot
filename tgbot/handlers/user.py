@@ -413,7 +413,7 @@ async def publish_ad(callback: CallbackQuery, state: FSMContext, callback_data: 
     ad = await repo.get_ad(ad_id)
 
     if ad.published > 0:
-        href = f"t.me/{cfg.tg_bot.channel_tag}/{ad.published}"
+        href = f"t.me/{cfg.tg_bot.channel_tag}/{ad.publish_msg_ids[0]}"
         delete_markup = await revoke_button(cfg, ad_id)
 
         await callback.answer()
@@ -456,7 +456,7 @@ async def confirm_ad(callback: CallbackQuery, state: FSMContext, callback_data: 
     confirm = callback_data.get("confirm")
 
     if ad.published > 0:
-        href = f"t.me/{cfg.tg_bot.channel_tag}/{ad.published}"
+        href = f"t.me/{cfg.tg_bot.channel_tag}/{ad.publish_msg_ids[0]}"
         delete_markup = await revoke_button(cfg, ad_id)
 
         await callback.answer()
