@@ -156,6 +156,13 @@ async def wait_description(message: Message, state: FSMContext):
     cfg: Config = mw_data['config']
     repo: Repo = mw_data['repo']
 
+    description = message.text
+    description_ent = message.parse_entities(as_html=True)
+    desc_lengths = cfg.misc.texts.lengths.description
+    if len(description) < desc_lengths.min or len(description) > desc_lengths.max:
+        await message.answer(text=cfg.misc.texts.lengths.description.error_message)
+        return
+
     data = await state.get_data()
 
     ad_id = data.get("ad_id")
@@ -172,7 +179,7 @@ async def wait_description(message: Message, state: FSMContext):
         ad_type=ad.ad_type,
         category=ad.category,
         cost=ad.cost,
-        description=message.parse_entities(as_html=True),
+        description=description_ent,
         media_group=ad.media_group
     )
 
@@ -291,8 +298,9 @@ async def wait_new_description(message: Message, state: FSMContext):
     description = message.text
     description_ent = message.parse_entities(as_html=True)
     desc_lengths = cfg.misc.texts.lengths.description
-    if desc_lengths.min > len(description) > desc_lengths.max:
-        await message.answer(text=cfg.misc.texts.messages.parts.description)
+
+    if len(description) < desc_lengths.min or len(description) > desc_lengths.max:
+        await message.answer(text=cfg.misc.texts.lengths.description.error_message)
         return
 
     new_ad = await repo.add_ad(

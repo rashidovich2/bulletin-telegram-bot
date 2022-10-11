@@ -75,6 +75,7 @@ class MessagesText:
 
 @dataclass()
 class DescriptionLengths:
+    error_message: str
     min: int
     max: int
 
@@ -172,6 +173,7 @@ def load_config(path: str = None, texts_path=None):
                 ),
                 lengths=Lenghts(
                     description=DescriptionLengths(
+                        error_message=texts['lengths']['description']['error_message'],
                         min=texts['lengths']['description']['min'],
                         max=texts['lengths']['description']['max']
                     )

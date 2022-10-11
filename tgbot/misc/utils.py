@@ -4,6 +4,22 @@ from tgbot.config import Config
 from tgbot.models.ad import Ad
 
 
+def format_thousands_cost(cost: str):
+    rev_cost = cost[::-1]
+    rev_new_cost = ""
+
+    counter = 1
+    for i in range(len(rev_cost)):
+        rev_new_cost += rev_cost[i]
+        if counter == 3:
+            counter = 1
+            rev_new_cost += " "
+        else:
+            counter += 1
+
+    return rev_new_cost[::-1]
+
+
 def make_info_text(cfg: Config, ad: Ad, from_user: User) -> str:
     if ad.ad_type == "rent":
         ad_type = cfg.misc.texts.messages.rent
@@ -26,7 +42,7 @@ def make_info_text(cfg: Config, ad: Ad, from_user: User) -> str:
         ad_type,
         ad.category,
         ad.description,
-        ad.cost,
+        format_thousands_cost(str(ad.cost)),
         href,
         name
     )
