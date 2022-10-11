@@ -2,6 +2,7 @@ from aiogram import Dispatcher
 from aiogram.dispatcher import FSMContext
 from aiogram.dispatcher.handler import ctx_data
 from aiogram.types import Message, CallbackQuery, MediaGroup, InputFile, InputMediaPhoto
+from aiogram.utils.exceptions import MessageCantBeDeleted
 
 from tgbot.config import Config
 from tgbot.keyboards.inline import ad_categories_keyboard, ad_navigate, ad_cd, photo_cd, desc_cd, cost_cd, \
@@ -426,50 +427,63 @@ async def confirm_ad(callback: CallbackQuery, state: FSMContext, callback_data: 
     ad = await repo.get_ad(ad_id)
     confirm = callback_data.get("confirm")
 
-    if confirm == "1":
-
-        if len(ad.media_group) > 0:
-            media_group = ad.media_group
-            media_group[0]["caption"] = make_info_text(cfg, ad, callback.from_user)
-
-            channel_msgs = await callback.bot.send_media_group(
-                chat_id=cfg.tg_bot.channel_id,
-                media=media_group
-            )
-        else:
-            channel_msgs = []
-            channel_msg = await callback.bot.send_message(
-                chat_id=cfg.tg_bot.channel_id,
-                text=make_info_text(cfg, ad, callback.from_user)
-            )
-            channel_msgs.append(channel_msg)
-
-        await repo.publish_ad(ad_id, channel_msgs[0].message_id)
-
-        href = f"t.me/{cfg.tg_bot.channel_tag}/{channel_msgs[0].message_id}"
+    if ad.published > 0:
+        href = f"t.me/{cfg.tg_bot.channel_tag}/{ad.published}"
         delete_markup = await revoke_button(cfg, ad_id)
 
         await callback.answer()
-        await callback.message.answer(
-            text=cfg.misc.texts.messages.success_msg.format(href),
+        await callback.message.edit_text(
+            text=cfg.misc.texts.messages.ad_already_published_msg.format(href),
             reply_markup=delete_markup
         )
     else:
-        await callback.answer()
+        if confirm == "1":
+            if len(ad.media_group) > 0:
+                media_group = ad.media_group
+                media_group[0]["caption"] = make_info_text(cfg, ad, callback.from_user)
 
-        if len(ad.media_group) > 0:
-            is_media = "1"
+                channel_msgs = await callback.bot.send_media_group(
+                    chat_id=cfg.tg_bot.channel_id,
+                    media=media_group
+                )
+            else:
+                channel_msgs = []
+                channel_msg = await callback.bot.send_message(
+                    chat_id=cfg.tg_bot.channel_id,
+                    text=make_info_text(cfg, ad, callback.from_user)
+                )
+                channel_msgs.append(channel_msg)
+
+            msg_ids = []
+            for msg in channel_msgs:
+                msg_ids.append(msg.message_id)
+
+            await repo.publish_ad(ad_id, msg_ids)
+
+            href = f"t.me/{cfg.tg_bot.channel_tag}/{channel_msgs[0].message_id}"
+            delete_markup = await revoke_button(cfg, ad_id)
+
+            await callback.answer()
+            await callback.message.edit_text(
+                text=cfg.misc.texts.messages.success_msg.format(href),
+                reply_markup=delete_markup
+            )
         else:
-            is_media = "0"
+            await callback.answer()
 
-        ctrg = cfg.misc.texts.object_types.index(ad.category)
-        inline_markup = await ad_navigate(cfg, ad.id, ctrg, is_media)
+            if len(ad.media_group) > 0:
+                is_media = "1"
+            else:
+                is_media = "0"
 
-        await callback.message.edit_text(text=cfg.misc.texts.messages.confirm_declined)
-        await callback.message.answer(
-            text=make_info_text(cfg, ad, callback.from_user),
-            reply_markup=inline_markup
-        )
+            ctrg = cfg.misc.texts.object_types.index(ad.category)
+            inline_markup = await ad_navigate(cfg, ad.id, ctrg, is_media)
+
+            await callback.message.edit_text(text=cfg.misc.texts.messages.confirm_declined)
+            await callback.message.answer(
+                text=make_info_text(cfg, ad, callback.from_user),
+                reply_markup=inline_markup
+            )
 
 
 async def revoke_ad(callback: CallbackQuery, callback_data: dict):
@@ -478,32 +492,41 @@ async def revoke_ad(callback: CallbackQuery, callback_data: dict):
     repo: Repo = mw_data['repo']
 
     ad_id = callback_data.get("ad_id")
-    msg_ids_str: str = callback_data.get("msg_ids")
-    msg_ids = msg_ids_str.split(",")
-
-    for msg_id in msg_ids:
-        await callback.bot.delete_message(
-            chat_id=cfg.tg_bot.channel_id,
-            message_id=int(msg_id)
-        )
-    await repo.revoke_ad(ad_id)
-
-    await callback.answer()
-    await callback.message.edit_text(text=cfg.misc.texts.messages.revoked_msg)
-
     ad = await repo.get_ad(ad_id)
-    if len(ad.media_group) > 0:
-        is_media = "1"
-    else:
-        is_media = "0"
 
-    ctrg = cfg.misc.texts.object_types.index(ad.category)
-    inline_markup = await ad_navigate(cfg, ad.id, ctrg, is_media)
+    try:
+        if ad.published > 0:
+            for msg_id in ad.publish_msg_ids:
+                await callback.bot.delete_message(
+                    chat_id=cfg.tg_bot.channel_id,
+                    message_id=int(msg_id)
+                )
+            await repo.revoke_ad(ad_id)
 
-    await callback.message.answer(
-        text=make_info_text(cfg, ad, callback.from_user),
-        reply_markup=inline_markup
-    )
+        await callback.answer()
+        await callback.message.edit_text(text=cfg.misc.texts.messages.revoked_msg)
+
+        ad = await repo.get_ad(ad_id)
+        if len(ad.media_group) > 0:
+            is_media = "1"
+        else:
+            is_media = "0"
+
+        ctrg = cfg.misc.texts.object_types.index(ad.category)
+        inline_markup = await ad_navigate(cfg, ad.id, ctrg, is_media)
+
+        await callback.message.answer(
+            text=make_info_text(cfg, ad, callback.from_user),
+            reply_markup=inline_markup
+        )
+    except MessageCantBeDeleted:
+        await callback.message.edit_text(
+            text=cfg.misc.texts.messages.cannot_revoke,
+        )
+    except Exception:
+        await callback.message.answer(
+            text="Произошла ошибка",
+        )
 
 
 def register_user(dp: Dispatcher, cfg: Config):

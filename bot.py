@@ -25,6 +25,23 @@ async def register_all_middlewares(dp, config):
     dp.setup_middleware(ChannelJoinedMiddleware(config=config))
     dp.setup_middleware(PostgresDbMiddleware(pool=pool))
 
+    # Migrations
+    fd = open("create_db.sql", 'r')
+    sqlFile = fd.read()
+    fd.close()
+
+    conn = await asyncpg.connect(dsn=config.db.postgres_dsn)
+    grant_privileges_sql = f"ALTER TABLE IF EXISTS ads OWNER TO {config.db.user};" \
+                           f"GRANT ALL PRIVILEGES ON DATABASE {config.db.database} to {config.db.user};" \
+                           f"GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO {config.db.user};" \
+                           f"GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO {config.db.user};"
+
+    await conn.execute(grant_privileges_sql)
+    await conn.execute(sqlFile)
+    await conn.execute(grant_privileges_sql)
+
+    await conn.close()
+
 
 def register_all_filters(dp):
     dp.filters_factory.bind(AdminFilter)

@@ -19,7 +19,7 @@ class Repo:
         row = await self.conn.fetchrow(
             "INSERT INTO ads(user_id, ad_type, category, cost, description, media_group) "
             "VALUES ($1, $2, $3, $4, $5, $6) "
-            "RETURNING id, user_id, ad_type, category, cost, description, media_group, published",
+            "RETURNING id, user_id, ad_type, category, cost, description, media_group, published, publish_msg_ids",
             user_id,
             ad_type,
             category,
@@ -31,6 +31,7 @@ class Repo:
         ad = Ad(**row)
 
         ad.set_media_group(json.loads(ad.media_group))
+        ad.set_publish_msg_ids(json.loads(ad.publish_msg_ids))
 
         return ad
 
@@ -41,7 +42,7 @@ class Repo:
         row = await self.conn.fetchrow(
             "UPDATE ads SET ad_type = $1, category = $2, cost = $3, description = $4, media_group = $5 "
             "WHERE id = $6 "
-            "RETURNING id, user_id, ad_type, category, cost, description, media_group, published",
+            "RETURNING id, user_id, ad_type, category, cost, description, media_group, published, publish_msg_ids",
             ad_type,
             category,
             int(cost),
@@ -53,27 +54,28 @@ class Repo:
         ad = Ad(**row)
 
         ad.set_media_group(json.loads(ad.media_group))
+        ad.set_publish_msg_ids(json.loads(ad.publish_msg_ids))
 
         return ad
 
-    async def publish_ad(self, ad_id, message_id):
+    async def publish_ad(self, ad_id, message_ids):
         await self.conn.execute(
-            "UPDATE ads SET published = $1 "
+            "UPDATE ads SET published = 1, publish_msg_ids = $1 "
             "WHERE id = $2 ",
-            int(message_id),
+            json.dumps(message_ids),
             int(ad_id)
         )
 
     async def revoke_ad(self, ad_id):
         await self.conn.execute(
-            "UPDATE ads SET published = 0 "
+            "UPDATE ads SET published = 0, publish_msg_ids = '[]'::jsonb "
             "WHERE id = $1 ",
             int(ad_id)
         )
 
     async def get_ad(self, ad_id) -> Ad:
         row = await self.conn.fetchrow(
-            "SELECT id, user_id, ad_type, category, cost, description, media_group, published "
+            "SELECT id, user_id, ad_type, category, cost, description, media_group, published, publish_msg_ids "
             "FROM ads "
             "WHERE id = $1",
             int(ad_id)
@@ -82,12 +84,13 @@ class Repo:
         ad = Ad(**row)
 
         ad.set_media_group(json.loads(ad.media_group))
+        ad.set_publish_msg_ids(json.loads(ad.publish_msg_ids))
 
         return ad
 
     async def get_last_user_ad(self, user_id) -> Ad:
         row = await self.conn.fetchrow(
-            "SELECT id, user_id, ad_type, category, cost, description, media_group, published "
+            "SELECT id, user_id, ad_type, category, cost, description, media_group, published, publish_msg_ids "
             "FROM ads "
             "WHERE user_id = $1 "
             "ORDER BY id DESC",
@@ -97,5 +100,6 @@ class Repo:
         ad = Ad(**row)
 
         ad.set_media_group(json.loads(ad.media_group))
+        ad.set_publish_msg_ids(json.loads(ad.publish_msg_ids))
 
         return ad

@@ -1,4 +1,4 @@
-CREATE TABLE ads (
+CREATE TABLE IF NOT EXISTS ads (
   id serial not null primary key,
   user_id bigint,
   description text,
@@ -8,3 +8,9 @@ CREATE TABLE ads (
   media_group jsonb,
   published int default 0
 );
+
+ALTER TABLE ads
+ADD COLUMN IF NOT EXISTS publish_msg_ids jsonb;
+
+ALTER TABLE ads
+ALTER COLUMN publish_msg_ids SET default '[]'::jsonb;

@@ -67,6 +67,7 @@ class MessagesText:
     start_msg: str
     success_msg: str
     revoked_msg: str
+    cannot_revoke: str
     not_in_channel_msg: str
     ad_already_published_msg: str
     parts: MessagesPartsText
@@ -159,6 +160,7 @@ def load_config(path: str = None, texts_path=None):
                     start_msg=texts['messages']['start_msg'],
                     success_msg=texts['messages']['success_msg'],
                     revoked_msg=texts['messages']['revoked_msg'],
+                    cannot_revoke=texts['messages']['cannot_revoke'],
                     not_in_channel_msg=texts['messages']['not_in_channel_msg'],
                     ad_already_published_msg=texts['messages']['ad_already_published_msg'],
                     parts=MessagesPartsText(
