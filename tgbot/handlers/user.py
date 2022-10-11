@@ -55,6 +55,11 @@ async def category_navigate(callback: CallbackQuery, state: FSMContext, callback
 
     if level == "0":
         inline_markup = await ad_categories_change_keyboard(cfg, ad.id)
+
+        await callback.answer()
+        await callback.message.edit_text(text=make_info_text(cfg, ad, callback.from_user), reply_markup=inline_markup)
+        await state.reset_state()
+        await state.set_state("navigate_category_change")
     else:
         if len(photo_ids) > 0:
             mg = MediaGroup()
@@ -79,9 +84,20 @@ async def category_navigate(callback: CallbackQuery, state: FSMContext, callback
 
         inline_markup = await ad_navigate(cfg, ad.id, category, is_media)
 
-    await callback.answer()
-    await callback.message.edit_text(text=make_info_text(cfg, ad, callback.from_user), reply_markup=inline_markup)
-    await state.reset_state()
+        await callback.answer()
+        state_name = await state.get_state()
+        if state_name == "navigate_category_change":
+            await callback.message.edit_text(
+                text=make_info_text(cfg, ad, callback.from_user),
+                reply_markup=inline_markup
+            )
+        else:
+            await callback.message.answer(
+                text=make_info_text(cfg, ad, callback.from_user),
+                reply_markup=inline_markup
+            )
+
+        await state.reset_state()
 
 
 async def change_photo(callback: CallbackQuery, state: FSMContext, callback_data: dict):
@@ -113,20 +129,10 @@ async def change_description(callback: CallbackQuery, state: FSMContext, callbac
 
     await callback.answer()
     await state.set_state("wait_description")
-    sended_msg = await callback.message.answer(text=cfg.misc.texts.messages.parts.description)
-
-    data = await state.get_data()
-
-    state_d_ids = data.get("delete_ids")
-    delete_ids: list[int] = state_d_ids
-    if delete_ids is None:
-        delete_ids: list[int] = []
-    delete_ids.append(sended_msg.message_id)
+    await callback.message.edit_text(text=cfg.misc.texts.messages.parts.description)
 
     await state.update_data(
         ad_id=ad_id,
-        main_msg_id=callback.message.message_id,
-        delete_ids=delete_ids
     )
 
 
@@ -137,20 +143,10 @@ async def change_cost(callback: CallbackQuery, state: FSMContext, callback_data:
 
     await callback.answer()
     await state.set_state("wait_cost")
-    sended_msg = await callback.message.answer(text=cfg.misc.texts.messages.parts.cost)
-
-    data = await state.get_data()
-
-    state_d_ids: list[int] = data.get("delete_ids")
-    delete_ids: list[int] = state_d_ids
-    if delete_ids is None:
-        delete_ids: list[int] = []
-    delete_ids.append(sended_msg.message_id)
+    await callback.message.edit_text(text=cfg.misc.texts.messages.parts.cost)
 
     await state.update_data(
         ad_id=ad_id,
-        main_msg_id=callback.message.message_id,
-        delete_ids=delete_ids,
     )
 
 
@@ -163,10 +159,6 @@ async def wait_description(message: Message, state: FSMContext):
 
     ad_id = data.get("ad_id")
     ad = await repo.get_ad(ad_id)
-
-    main_msg_id = data.get("main_msg_id")
-
-    delete_ids: list[int] = data.get("delete_ids")
 
     if len(ad.media_group) == 0:
         is_media = "0"
@@ -183,17 +175,11 @@ async def wait_description(message: Message, state: FSMContext):
         media_group=ad.media_group
     )
 
-    await message.bot.edit_message_text(
+    await message.answer(
         text=make_info_text(cfg, updated_ad, message.from_user),
-        chat_id=message.chat.id,
-        message_id=main_msg_id,
         reply_markup=inline_markup,
     )
 
-    delete_ids.append(message.message_id)
-
-    for delete_id in delete_ids:
-        await message.bot.delete_message(message_id=delete_id, chat_id=message.chat.id)
     await state.reset_state()
 
 
@@ -207,17 +193,11 @@ async def wait_cost(message: Message, state: FSMContext):
 
     ad = await repo.get_ad(ad_id)
 
-    delete_ids: list[int] = data.get("delete_ids")
-
     try:
-        main_msg_id = data.get("main_msg_id")
         cost = int(message.text)
 
         if cost < 0:
-            msg = await message.answer("Цена не может быть отрицательной! Введите снова")
-            delete_ids.append(msg.message_id)
-            delete_ids.append(message.message_id)
-            await state.update_data(delete_ids=delete_ids)
+            await message.answer("Цена не может быть отрицательной! Введите снова")
             return
 
         if len(ad.media_group) == 0:
@@ -235,24 +215,15 @@ async def wait_cost(message: Message, state: FSMContext):
             media_group=ad.media_group
         )
 
-        await message.bot.edit_message_text(
+        await message.answer(
             text=make_info_text(cfg, updated_ad, message.from_user),
-            chat_id=message.chat.id,
-            message_id=main_msg_id,
             reply_markup=inline_markup,
         )
 
-        delete_ids.append(message.message_id)
-
-        for delete_id in delete_ids:
-            await message.bot.delete_message(message_id=delete_id, chat_id=message.chat.id)
         await state.reset_state()
 
     except ValueError:
-        msg = await message.answer("Введите число!")
-        delete_ids.append(msg.message_id)
-        delete_ids.append(message.message_id)
-        await state.update_data(delete_ids=delete_ids)
+        await message.answer("Введите число!")
 
     except Exception:
         await message.answer("Ошибка, попробуйте заново!")
@@ -353,12 +324,26 @@ async def wait_new_photo(message: Message, state: FSMContext):
 async def show_photo(callback: CallbackQuery, state: FSMContext, callback_data: dict):
     mw_data = ctx_data.get()
     repo: Repo = mw_data['repo']
+    cfg: Config = mw_data['config']
 
     ad_id = callback_data.get("ad_id")
     ad = await repo.get_ad(ad_id)
 
     await callback.answer()
     await callback.message.reply_media_group(media=ad.media_group)
+
+    if len(ad.media_group) > 0:
+        is_media = "1"
+    else:
+        is_media = "0"
+
+    ctrg = cfg.misc.texts.object_types.index(ad.category)
+    inline_markup = await ad_navigate(cfg, ad.id, ctrg, is_media)
+
+    await callback.message.answer(
+        text=make_info_text(cfg, ad, callback.from_user),
+        reply_markup=inline_markup
+    )
 
 
 async def delete_photo(callback: CallbackQuery, state: FSMContext, callback_data: dict):
@@ -398,33 +383,38 @@ async def publish_ad(callback: CallbackQuery, state: FSMContext, callback_data: 
     ad_id = callback_data.get("ad_id")
     ad = await repo.get_ad(ad_id)
 
-    if len(ad.media_group) > 0:
-        media_group = ad.media_group
-        media_group[0]["caption"] = make_info_text(cfg, ad, callback.from_user)
+    if ad.published > 0:
+        href = f"t.me/{cfg.tg_bot.channel_tag}/{ad.published}"
+        delete_markup = await revoke_button(cfg, ad_id)
 
-        msgs = await callback.message.reply_media_group(
-            media=media_group
+        await callback.answer()
+        await callback.message.answer(
+            text=cfg.misc.texts.messages.ad_already_published_msg.format(href),
+            reply_markup=delete_markup
         )
     else:
-        msgs = []
-        msg = await callback.message.answer(
-            text=make_info_text(cfg, ad, callback.from_user)
+        if len(ad.media_group) > 0:
+            media_group = ad.media_group
+            media_group[0]["caption"] = make_info_text(cfg, ad, callback.from_user)
+
+            await callback.message.reply_media_group(
+                media=media_group
+            )
+        else:
+            msgs = []
+            msg = await callback.message.answer(
+                text=make_info_text(cfg, ad, callback.from_user)
+            )
+            msgs.append(msg)
+
+        confirm_markup = await confirm_buttons(cfg, ad_id)
+
+        await state.set_state("confirm_ad")
+        await callback.answer()
+        await callback.message.answer(
+            text=cfg.misc.texts.messages.confirm,
+            reply_markup=confirm_markup
         )
-        msgs.append(msg)
-
-    delete_msg_ids = []
-    for msg in msgs:
-        delete_msg_ids.append(msg.message_id)
-
-    confirm_markup = await confirm_buttons(cfg, ad_id)
-
-    await state.set_state("confirm_ad")
-    await state.update_data(delete_ids=delete_msg_ids)
-    await callback.answer()
-    await callback.message.answer(
-        text=cfg.misc.texts.messages.confirm,
-        reply_markup=confirm_markup
-    )
 
 
 async def confirm_ad(callback: CallbackQuery, state: FSMContext, callback_data: dict):
@@ -433,14 +423,10 @@ async def confirm_ad(callback: CallbackQuery, state: FSMContext, callback_data: 
     repo: Repo = mw_data['repo']
 
     ad_id = callback_data.get("ad_id")
+    ad = await repo.get_ad(ad_id)
     confirm = callback_data.get("confirm")
 
-    data = await state.get_data()
-    delete_ids: list[int] = data.get("delete_ids")
-    delete_ids.append(callback.message.message_id)
-
     if confirm == "1":
-        ad = await repo.get_ad(ad_id)
 
         if len(ad.media_group) > 0:
             media_group = ad.media_group
@@ -458,18 +444,10 @@ async def confirm_ad(callback: CallbackQuery, state: FSMContext, callback_data: 
             )
             channel_msgs.append(channel_msg)
 
-        await repo.publish_ad(ad_id)
+        await repo.publish_ad(ad_id, channel_msgs[0].message_id)
 
         href = f"t.me/{cfg.tg_bot.channel_tag}/{channel_msgs[0].message_id}"
-
-        msg_ids = []
-        for channel_msg in channel_msgs:
-            msg_ids.append(str(channel_msg.message_id))
-
-        delete_markup = await revoke_button(cfg, ad_id, msg_ids)
-
-        for msg_id in delete_ids:
-            await callback.bot.delete_message(chat_id=callback.from_user.id, message_id=msg_id)
+        delete_markup = await revoke_button(cfg, ad_id)
 
         await callback.answer()
         await callback.message.answer(
@@ -479,8 +457,19 @@ async def confirm_ad(callback: CallbackQuery, state: FSMContext, callback_data: 
     else:
         await callback.answer()
 
-        for msg_id in delete_ids:
-            await callback.bot.delete_message(chat_id=callback.from_user.id, message_id=msg_id)
+        if len(ad.media_group) > 0:
+            is_media = "1"
+        else:
+            is_media = "0"
+
+        ctrg = cfg.misc.texts.object_types.index(ad.category)
+        inline_markup = await ad_navigate(cfg, ad.id, ctrg, is_media)
+
+        await callback.message.edit_text(text=cfg.misc.texts.messages.confirm_declined)
+        await callback.message.answer(
+            text=make_info_text(cfg, ad, callback.from_user),
+            reply_markup=inline_markup
+        )
 
 
 async def revoke_ad(callback: CallbackQuery, callback_data: dict):
@@ -499,7 +488,22 @@ async def revoke_ad(callback: CallbackQuery, callback_data: dict):
         )
     await repo.revoke_ad(ad_id)
 
+    await callback.answer()
     await callback.message.edit_text(text=cfg.misc.texts.messages.revoked_msg)
+
+    ad = await repo.get_ad(ad_id)
+    if len(ad.media_group) > 0:
+        is_media = "1"
+    else:
+        is_media = "0"
+
+    ctrg = cfg.misc.texts.object_types.index(ad.category)
+    inline_markup = await ad_navigate(cfg, ad.id, ctrg, is_media)
+
+    await callback.message.answer(
+        text=make_info_text(cfg, ad, callback.from_user),
+        reply_markup=inline_markup
+    )
 
 
 def register_user(dp: Dispatcher, cfg: Config):

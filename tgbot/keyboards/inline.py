@@ -13,7 +13,7 @@ desc_cd = CallbackData("desc", "ad_id")
 cost_cd = CallbackData("cost", "ad_id")
 publish_cd = CallbackData("publish", "ad_id")
 confirm_publish_cd = CallbackData("confirm_publish", "ad_id", "confirm")
-revoke_cd = CallbackData("cancel_publish", "ad_id", "msg_ids")
+revoke_cd = CallbackData("cancel_publish", "ad_id")
 
 
 def make_callback_data(level, category, ad_id):
@@ -67,13 +67,13 @@ async def photo_navigate(cfg: Config, ad_id, category):
     return markup
 
 
-async def revoke_button(cfg: Config, ad_id, msg_ids: list[str]):
+async def revoke_button(cfg: Config, ad_id):
     markup = InlineKeyboardMarkup()
 
     markup.row(
         InlineKeyboardButton(
             text=cfg.misc.texts.buttons.revoke,
-            callback_data=revoke_cd.new(ad_id=ad_id, msg_ids=",".join(msg_ids))
+            callback_data=revoke_cd.new(ad_id=ad_id)
         )
     )
 

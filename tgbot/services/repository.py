@@ -56,10 +56,11 @@ class Repo:
 
         return ad
 
-    async def publish_ad(self, ad_id):
+    async def publish_ad(self, ad_id, message_id):
         await self.conn.execute(
-            "UPDATE ads SET published = 1 "
-            "WHERE id = $1 ",
+            "UPDATE ads SET published = $1 "
+            "WHERE id = $2 ",
+            int(message_id),
             int(ad_id)
         )
 

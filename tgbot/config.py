@@ -63,10 +63,12 @@ class MessagesText:
     sell: str
     rent: str
     confirm: str
+    confirm_declined: str
     start_msg: str
     success_msg: str
     revoked_msg: str
     not_in_channel_msg: str
+    ad_already_published_msg: str
     parts: MessagesPartsText
 
 
@@ -153,10 +155,12 @@ def load_config(path: str = None, texts_path=None):
                     sell=texts['messages']['sell'],
                     rent=texts['messages']['rent'],
                     confirm=texts['messages']['confirm'],
+                    confirm_declined=texts['messages']['confirm_declined'],
                     start_msg=texts['messages']['start_msg'],
                     success_msg=texts['messages']['success_msg'],
                     revoked_msg=texts['messages']['revoked_msg'],
                     not_in_channel_msg=texts['messages']['not_in_channel_msg'],
+                    ad_already_published_msg=texts['messages']['ad_already_published_msg'],
                     parts=MessagesPartsText(
                         what_object=texts['messages']['parts']['what_object'],
                         cost=texts['messages']['parts']['cost'],
