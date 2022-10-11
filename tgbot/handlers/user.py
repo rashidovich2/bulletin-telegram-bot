@@ -8,7 +8,7 @@ from tgbot.config import Config
 from tgbot.keyboards.inline import ad_categories_keyboard, ad_navigate, ad_cd, photo_cd, desc_cd, cost_cd, \
     new_cost_cd, \
     ad_categories_change_keyboard, photo_navigate, get_photo_cd, delete_photo_cd, publish_cd, revoke_button, revoke_cd, \
-    confirm_publish_cd, confirm_buttons
+    confirm_publish_cd, confirm_buttons, ad_cancel_btn
 from tgbot.keyboards.reply import get_menu
 from tgbot.misc.utils import get_category_with_index, make_info_text
 from tgbot.services.repository import Repo
@@ -91,7 +91,9 @@ async def category_navigate(callback: CallbackQuery, state: FSMContext, callback
         if state_name == "wait_new_photo" or state_name == "wait_photo":
             await callback.message.delete_reply_markup()
 
-        if state_name == "navigate_category_change":
+        if state_name == "navigate_category_change" \
+                or state_name == "wait_description" \
+                or state_name == "wait_description":
             await callback.message.edit_text(
                 text=make_info_text(cfg, ad, callback.from_user),
                 reply_markup=inline_markup
@@ -128,13 +130,20 @@ async def change_photo(callback: CallbackQuery, state: FSMContext, callback_data
 
 
 async def change_description(callback: CallbackQuery, state: FSMContext, callback_data: dict):
-    cfg: Config = ctx_data.get()['config']
+    mw_data = ctx_data.get()
+    cfg: Config = mw_data['config']
+    repo: Repo = mw_data['repo']
 
     ad_id = callback_data.get("ad_id")
+    ad = await repo.get_ad(ad_id)
 
     await callback.answer()
     await state.set_state("wait_description")
-    await callback.message.edit_text(text=cfg.misc.texts.messages.parts.description)
+
+    ctgr = cfg.misc.texts.object_types.index(ad.category)
+    cancel_btn = await ad_cancel_btn(cfg, ad.id, ctgr)
+
+    await callback.message.edit_text(text=cfg.misc.texts.messages.parts.description, reply_markup=cancel_btn)
 
     await state.update_data(
         ad_id=ad_id,
@@ -142,13 +151,20 @@ async def change_description(callback: CallbackQuery, state: FSMContext, callbac
 
 
 async def change_cost(callback: CallbackQuery, state: FSMContext, callback_data: dict):
-    cfg: Config = ctx_data.get()['config']
+    mw_data = ctx_data.get()
+    cfg: Config = mw_data['config']
+    repo: Repo = mw_data['repo']
 
     ad_id = callback_data.get("ad_id")
+    ad = await repo.get_ad(ad_id)
 
     await callback.answer()
     await state.set_state("wait_cost")
-    await callback.message.edit_text(text=cfg.misc.texts.messages.parts.cost)
+
+    ctgr = cfg.misc.texts.object_types.index(ad.category)
+    cancel_btn = await ad_cancel_btn(cfg, ad.id, ctgr)
+
+    await callback.message.edit_text(text=cfg.misc.texts.messages.parts.cost, reply_markup=cancel_btn)
 
     await state.update_data(
         ad_id=ad_id,

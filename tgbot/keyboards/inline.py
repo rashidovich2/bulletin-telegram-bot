@@ -146,3 +146,19 @@ async def ad_navigate(cfg: Config, ad_id, category, photo="0"):
     markup.row(publish_markup)
 
     return markup
+
+
+async def ad_cancel_btn(cfg: Config, ad_id, category):
+    markup = InlineKeyboardMarkup()
+
+    button_text = f"{cfg.misc.texts.buttons.cancel}"
+    callback_data = make_callback_data(
+        level=1,
+        category=category,
+        ad_id=ad_id
+    )
+    markup.row(
+        InlineKeyboardButton(text=button_text, callback_data=callback_data)
+    )
+
+    return markup
