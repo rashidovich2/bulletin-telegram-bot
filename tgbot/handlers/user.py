@@ -93,7 +93,7 @@ async def category_navigate(callback: CallbackQuery, state: FSMContext, callback
 
         if state_name == "navigate_category_change" \
                 or state_name == "wait_description" \
-                or state_name == "wait_description":
+                or state_name == "wait_cost":
             await callback.message.edit_text(
                 text=make_info_text(cfg, ad, callback.from_user),
                 reply_markup=inline_markup
