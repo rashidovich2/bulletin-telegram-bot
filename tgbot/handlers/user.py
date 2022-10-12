@@ -452,16 +452,16 @@ async def confirm_ad(callback: CallbackQuery, state: FSMContext, callback_data: 
     cfg: Config = mw_data['config']
     repo: Repo = mw_data['repo']
 
-    ad_id = callback_data.get("ad_id")
-    ad = await repo.get_ad(ad_id)
-    confirm = callback_data.get("confirm")
-
     member = await get_channel_member(cfg, callback.message)
     if not is_member_in_channel(member):
         await callback.message.answer(
             text=cfg.misc.texts.messages.not_in_channel_msg.format(cfg.channel.url)
         )
         return
+
+    ad_id = callback_data.get("ad_id")
+    ad = await repo.get_ad(ad_id)
+    confirm = callback_data.get("confirm")
 
     if ad.published > 0:
         href = f"t.me/{cfg.channel.name}/{ad.publish_msg_ids[0]}"
@@ -527,15 +527,15 @@ async def revoke_ad(callback: CallbackQuery, callback_data: dict):
     cfg: Config = mw_data['config']
     repo: Repo = mw_data['repo']
 
-    ad_id = callback_data.get("ad_id")
-    ad = await repo.get_ad(ad_id)
-
     member = await get_channel_member(cfg, callback.message)
     if not is_member_in_channel(member):
         await callback.message.answer(
             text=cfg.misc.texts.messages.not_in_channel_msg.format(cfg.channel.url)
         )
         return
+
+    ad_id = callback_data.get("ad_id")
+    ad = await repo.get_ad(ad_id)
 
     try:
         if ad.published > 0:
