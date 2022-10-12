@@ -1,7 +1,7 @@
 from aiogram import Dispatcher
 from aiogram.dispatcher import FSMContext
 from aiogram.dispatcher.handler import ctx_data
-from aiogram.types import Message, CallbackQuery, MediaGroup, InputFile, InputMediaPhoto
+from aiogram.types import Message, CallbackQuery, MediaGroup
 from aiogram.utils.exceptions import MessageCantBeDeleted
 
 from tgbot.config import Config

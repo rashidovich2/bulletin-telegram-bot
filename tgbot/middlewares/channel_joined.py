@@ -1,8 +1,31 @@
 from aiogram import types
 from aiogram.dispatcher.handler import CancelHandler
 from aiogram.dispatcher.middlewares import BaseMiddleware
+from cachetools import TTLCache
 
 from tgbot.config import Config
+
+channel_joined_member_cache = TTLCache(maxsize=1000, ttl=60)
+
+
+def is_member_in_channel(member: types.ChatMember) -> bool:
+    if member.status == "left" or member.status == "kicked" or member.status == "restricted":
+        return False
+    return True
+
+
+async def get_member(cfg: Config, message: types.Message) -> types.ChatMember:
+    chat_id = message.from_user.id
+
+    if chat_id in channel_joined_member_cache:
+        return channel_joined_member_cache[chat_id]
+
+    member = await message.bot.get_chat_member(cfg.tg_bot.channel_id, chat_id)
+
+    if is_member_in_channel(member):
+        channel_joined_member_cache[chat_id] = member
+
+    return member
 
 
 class ChannelJoinedMiddleware(BaseMiddleware):
@@ -12,9 +35,10 @@ class ChannelJoinedMiddleware(BaseMiddleware):
 
     async def on_process_message(self, message: types.Message, data: dict):
         cfg: Config = self.cfg
-        member = await message.bot.get_chat_member(cfg.tg_bot.channel_id, message.from_user.id)
 
-        if member.status == "left" or member.status == "kicked" or member.status == "restricted":
+        member = await get_member(cfg, message)
+
+        if not is_member_in_channel(member):
             channel_href = f"t.me/{cfg.tg_bot.channel_tag}"
 
             await message.answer(
