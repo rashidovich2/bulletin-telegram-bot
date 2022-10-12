@@ -13,6 +13,7 @@ services:
     - "./tgbot:/usr/src/app/tgbot"
     - "./.env:/usr/src/app/.env"
     - "./texts.yml:/usr/src/app/texts.yml"
+    - "./create_db.sql:/usr/src/app/create_db.sql"
     command: python3 -m bot
     restart: always
     env_file:
