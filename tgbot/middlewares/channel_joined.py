@@ -5,7 +5,7 @@ from cachetools import TTLCache
 
 from tgbot.config import Config
 
-channel_joined_member_cache = TTLCache(maxsize=1000, ttl=60)
+channel_joined_member_cache = TTLCache(maxsize=1000, ttl=300)
 
 
 def is_member_in_channel(member: types.ChatMember) -> bool:
@@ -14,13 +14,17 @@ def is_member_in_channel(member: types.ChatMember) -> bool:
     return True
 
 
-async def get_member(cfg: Config, message: types.Message) -> types.ChatMember:
+async def get_channel_member(cfg: Config, message: types.Message) -> types.ChatMember:
+    return await message.bot.get_chat_member(cfg.channel.id, message.from_user.id)
+
+
+async def get_cache_channel_member(cfg: Config, message: types.Message) -> types.ChatMember:
     chat_id = message.from_user.id
 
     if chat_id in channel_joined_member_cache:
         return channel_joined_member_cache[chat_id]
 
-    member = await message.bot.get_chat_member(cfg.channel.id, chat_id)
+    member = await get_channel_member(cfg, message)
 
     if is_member_in_channel(member):
         channel_joined_member_cache[chat_id] = member
@@ -36,7 +40,7 @@ class ChannelJoinedMiddleware(BaseMiddleware):
     async def on_process_message(self, message: types.Message, data: dict):
         cfg: Config = self.cfg
 
-        member = await get_member(cfg, message)
+        member = await get_channel_member(cfg, message)
 
         if not is_member_in_channel(member):
             await message.answer(

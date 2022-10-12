@@ -10,6 +10,7 @@ from tgbot.keyboards.inline import ad_categories_keyboard, ad_navigate, ad_cd, p
     ad_categories_change_keyboard, photo_navigate, get_photo_cd, delete_photo_cd, publish_cd, revoke_button, revoke_cd, \
     confirm_publish_cd, confirm_buttons, ad_cancel_btn
 from tgbot.keyboards.reply import get_menu
+from tgbot.middlewares.channel_joined import get_channel_member, is_member_in_channel
 from tgbot.misc.utils import get_category_with_index, make_info_text
 from tgbot.services.repository import Repo
 
@@ -455,6 +456,13 @@ async def confirm_ad(callback: CallbackQuery, state: FSMContext, callback_data: 
     ad = await repo.get_ad(ad_id)
     confirm = callback_data.get("confirm")
 
+    member = await get_channel_member(cfg, callback.message)
+    if not is_member_in_channel(member):
+        await callback.message.answer(
+            text=cfg.misc.texts.messages.not_in_channel_msg.format(cfg.channel.url)
+        )
+        return
+
     if ad.published > 0:
         href = f"t.me/{cfg.channel.name}/{ad.publish_msg_ids[0]}"
         delete_markup = await revoke_button(cfg, ad_id)
@@ -521,6 +529,13 @@ async def revoke_ad(callback: CallbackQuery, callback_data: dict):
 
     ad_id = callback_data.get("ad_id")
     ad = await repo.get_ad(ad_id)
+
+    member = await get_channel_member(cfg, callback.message)
+    if not is_member_in_channel(member):
+        await callback.message.answer(
+            text=cfg.misc.texts.messages.not_in_channel_msg.format(cfg.channel.url)
+        )
+        return
 
     try:
         if ad.published > 0:
