@@ -13,7 +13,8 @@ def get_menu(cfg: Config):
                 KeyboardButton(text=buttons_text.sell)
             ],
         ],
-        resize_keyboard=True
+        resize_keyboard=True,
+        one_time_keyboard=True,
     )
 
     return menu

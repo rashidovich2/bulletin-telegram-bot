@@ -1,7 +1,8 @@
+import aiogram.types
 from aiogram import Dispatcher
 from aiogram.dispatcher import FSMContext
 from aiogram.dispatcher.handler import ctx_data
-from aiogram.types import Message, CallbackQuery, MediaGroup
+from aiogram.types import Message, CallbackQuery, MediaGroup, ReplyKeyboardRemove, ReplyKeyboardMarkup
 from aiogram.utils.exceptions import MessageCantBeDeleted
 
 from tgbot.config import Config
@@ -578,10 +579,10 @@ def register_user(dp: Dispatcher, cfg: Config):
     dp.register_message_handler(user_start, commands=["start"], state="*")
 
     dp.register_message_handler(sell_command, regexp=sell_btn_text, state="*")
-    dp.register_message_handler(user_start, commands=["sell"], state="*")
+    dp.register_message_handler(sell_command, commands=["sell"], state="*")
 
     dp.register_message_handler(rent_command, regexp=rent_btn_text, state="*")
-    dp.register_message_handler(user_start, commands=["rent"], state="*")
+    dp.register_message_handler(rent_command, commands=["rent"], state="*")
 
     dp.register_callback_query_handler(show_photo, get_photo_cd.filter(), state="*")
     dp.register_callback_query_handler(delete_photo, delete_photo_cd.filter(), state="*")
