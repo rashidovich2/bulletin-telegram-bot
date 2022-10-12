@@ -66,6 +66,8 @@ async def main():
     bot = Bot(token=config.tg_bot.token, parse_mode='HTML')
     dp = Dispatcher(bot, storage=storage)
 
+    await config.channel.set_channel_info(bot)
+
     bot['config'] = config
 
     await register_all_middlewares(dp, config)

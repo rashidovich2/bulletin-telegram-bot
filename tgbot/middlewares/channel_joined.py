@@ -20,7 +20,7 @@ async def get_member(cfg: Config, message: types.Message) -> types.ChatMember:
     if chat_id in channel_joined_member_cache:
         return channel_joined_member_cache[chat_id]
 
-    member = await message.bot.get_chat_member(cfg.tg_bot.channel_id, chat_id)
+    member = await message.bot.get_chat_member(cfg.channel.id, chat_id)
 
     if is_member_in_channel(member):
         channel_joined_member_cache[chat_id] = member
@@ -39,9 +39,7 @@ class ChannelJoinedMiddleware(BaseMiddleware):
         member = await get_member(cfg, message)
 
         if not is_member_in_channel(member):
-            channel_href = f"t.me/{cfg.tg_bot.channel_tag}"
-
             await message.answer(
-                text=cfg.misc.texts.messages.not_in_channel_msg.format(channel_href)
+                text=cfg.misc.texts.messages.not_in_channel_msg.format(cfg.channel.url)
             )
             raise CancelHandler()

@@ -413,7 +413,7 @@ async def publish_ad(callback: CallbackQuery, state: FSMContext, callback_data: 
     ad = await repo.get_ad(ad_id)
 
     if ad.published > 0:
-        href = f"t.me/{cfg.tg_bot.channel_tag}/{ad.publish_msg_ids[0]}"
+        href = f"t.me/{cfg.channel.name}/{ad.publish_msg_ids[0]}"
         delete_markup = await revoke_button(cfg, ad_id)
 
         await callback.answer()
@@ -456,7 +456,7 @@ async def confirm_ad(callback: CallbackQuery, state: FSMContext, callback_data: 
     confirm = callback_data.get("confirm")
 
     if ad.published > 0:
-        href = f"t.me/{cfg.tg_bot.channel_tag}/{ad.publish_msg_ids[0]}"
+        href = f"t.me/{cfg.channel.name}/{ad.publish_msg_ids[0]}"
         delete_markup = await revoke_button(cfg, ad_id)
 
         await callback.answer()
@@ -471,13 +471,13 @@ async def confirm_ad(callback: CallbackQuery, state: FSMContext, callback_data: 
                 media_group[0]["caption"] = make_info_text(cfg, ad, callback.from_user)
 
                 channel_msgs = await callback.bot.send_media_group(
-                    chat_id=cfg.tg_bot.channel_id,
+                    chat_id=cfg.channel.id,
                     media=media_group
                 )
             else:
                 channel_msgs = []
                 channel_msg = await callback.bot.send_message(
-                    chat_id=cfg.tg_bot.channel_id,
+                    chat_id=cfg.channel.id,
                     text=make_info_text(cfg, ad, callback.from_user)
                 )
                 channel_msgs.append(channel_msg)
@@ -488,7 +488,7 @@ async def confirm_ad(callback: CallbackQuery, state: FSMContext, callback_data: 
 
             await repo.publish_ad(ad_id, msg_ids)
 
-            href = f"t.me/{cfg.tg_bot.channel_tag}/{channel_msgs[0].message_id}"
+            href = f"t.me/{cfg.channel.name}/{channel_msgs[0].message_id}"
             delete_markup = await revoke_button(cfg, ad_id)
 
             await callback.answer()
@@ -526,7 +526,7 @@ async def revoke_ad(callback: CallbackQuery, callback_data: dict):
         if ad.published > 0:
             for msg_id in ad.publish_msg_ids:
                 await callback.bot.delete_message(
-                    chat_id=cfg.tg_bot.channel_id,
+                    chat_id=cfg.channel.id,
                     message_id=int(msg_id)
                 )
             await repo.revoke_ad(ad_id)

@@ -44,7 +44,9 @@ def make_info_text(cfg: Config, ad: Ad, from_user: User) -> str:
         ad.description,
         format_thousands_cost(str(ad.cost)),
         href,
-        name
+        name,
+        cfg.channel.url,
+        cfg.channel.title
     )
 
 

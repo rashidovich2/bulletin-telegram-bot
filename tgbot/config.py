@@ -1,6 +1,8 @@
 from dataclasses import dataclass
 
+import aiogram.bot.bot
 import yaml
+from aiogram import types
 from environs import Env
 
 
@@ -26,8 +28,6 @@ class DbConfig:
 
 @dataclass
 class TgBot:
-    channel_id: int
-    channel_tag: str
     token: str
     admin_ids: list[int]
     use_redis: bool
@@ -103,9 +103,30 @@ class Miscellaneous:
     other_params: str = None
 
 
+class Channel:
+    id: str
+    name: str
+    title: str
+    url: str
+
+    def __init__(self, channel_id):
+        self.id = channel_id
+
+    async def set_channel_info(self, bot: aiogram.bot.bot.Bot):
+        channel = await bot.get_chat(self.id)
+
+        if channel.type != "channel":
+            raise Exception("Set CHANNEL_ID only is Telegram Channel!")
+        else:
+            self.name = channel.username
+            self.title = channel.title
+            self.url = f"t.me/{channel.username}"
+
+
 @dataclass
 class Config:
     tg_bot: TgBot
+    channel: Channel
     db: DbConfig
     misc: Miscellaneous
 
@@ -126,11 +147,10 @@ def load_config(path: str = None, texts_path=None):
     return Config(
         tg_bot=TgBot(
             token=env.str("BOT_TOKEN"),
-            channel_id=env.int("CHANNEL_ID"),
-            channel_tag=env.str("CHANNEL_TAG"),
             admin_ids=list(map(int, env.list("ADMINS"))),
             use_redis=env.bool("USE_REDIS"),
         ),
+        channel=Channel(env.int("CHANNEL_ID")),
         db=DbConfig(
             host=env.str('DB_HOST'),
             password=env.str('DB_PASS'),
