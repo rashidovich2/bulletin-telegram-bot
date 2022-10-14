@@ -78,23 +78,29 @@ def send_mail(cfg: Config, ad: Ad, from_user: User, ad_href):
             name += " "
         name += from_user.last_name
 
-    text = f"Ссылка на объявление: <a href=\"{ad_href}\">Перейти</a><br><br>" \
-           f"<b>{ad_type}</b><br>" \
+    # f"Ссылка на объявление: <a href=\"{ad_href}\">Перейти</a><br><br>" \
+    text = f"<b>{ad_type}</b><br>" \
            f"Объект: <b>{ad.category}</b><br><br>" \
            f"{ad.description}<br><br>" \
-           f"Цена: <b>{format_thousands_cost(str(ad.cost))} ₽</b><br>" \
-           f"Прислано: <b>{name}</b>"
+           f"Цена: <b>{format_thousands_cost(str(ad.cost))} ₽</b><br>"
+
+    if from_user.username is not None:
+        user_href = f"t.me/{from_user.username}"
+        text = text + f"Прислано: <a href={user_href}>{name}</a> [TelegramID: <b>{from_user.id}</b>]"
+    else:
+        text = text + f"Прислано: {name} (Не проставлен username) [TelegramID: <b>{from_user.id}</b>]"
 
     msg = MIMEText(text, 'html')
     msg['Subject'] = f'Новое объявление от {name} на канале {cfg.channel.title}'
-    msg['From'] = cfg.misc.email
+    msg['From'] = cfg.smtp.user
     msg['To'] = cfg.misc.email
 
-    s = smtplib.SMTP(cfg.smtp.host, cfg.smtp.port)
+    s = smtplib.SMTP_SSL(cfg.smtp.host, cfg.smtp.port)
+    s.set_debuglevel(1)
     s.ehlo()
-    s.starttls()
     s.login(user=cfg.smtp.user, password=cfg.smtp.password)
-    s.sendmail(cfg.misc.email, [cfg.misc.email], msg.as_string())
+    s.auth_plain()
+    s.sendmail(cfg.smtp.user, [cfg.misc.email], msg.as_string())
     s.quit()
 
 
