@@ -12,7 +12,7 @@ from tgbot.keyboards.inline import ad_categories_keyboard, ad_navigate, ad_cd, p
     confirm_publish_cd, confirm_buttons, ad_cancel_btn
 from tgbot.keyboards.reply import get_menu
 from tgbot.middlewares.channel_joined import get_channel_member, is_member_in_channel
-from tgbot.misc.utils import get_category_with_index, make_info_text
+from tgbot.misc.utils import get_category_with_index, make_info_text, send_mail
 from tgbot.services.repository import Repo
 
 
@@ -499,6 +499,8 @@ async def confirm_ad(callback: CallbackQuery, state: FSMContext, callback_data: 
 
             href = f"t.me/{cfg.channel.name}/{channel_msgs[0].message_id}"
             delete_markup = await revoke_button(cfg, ad_id)
+
+            send_mail(cfg, ad, callback.from_user, href)
 
             await callback.answer()
             await callback.message.edit_text(

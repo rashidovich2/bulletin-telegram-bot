@@ -28,6 +28,7 @@ class DbConfig:
 
 @dataclass
 class TgBot:
+    bot_name: str
     token: str
     admin_ids: list[int]
     use_redis: bool
@@ -99,6 +100,7 @@ class Texts:
 # Config
 @dataclass
 class Miscellaneous:
+    email: str
     texts: Texts
     other_params: str = None
 
@@ -124,11 +126,20 @@ class Channel:
 
 
 @dataclass
+class Smtp:
+    host: str
+    port: int
+    user: str
+    password: str
+
+
+@dataclass
 class Config:
     tg_bot: TgBot
     channel: Channel
     db: DbConfig
     misc: Miscellaneous
+    smtp: Smtp
 
 
 def load_config(path: str = None, texts_path=None):
@@ -145,7 +156,14 @@ def load_config(path: str = None, texts_path=None):
                 print(exc)
 
     return Config(
+        smtp=Smtp(
+            host=env.str("SMTP_HOST"),
+            port=env.int("SMTP_PORT"),
+            user=env.str("SMTP_USER"),
+            password=env.str("SMTP_PASSWORD"),
+        ),
         tg_bot=TgBot(
+            bot_name=env.str('BOT_NAME'),
             token=env.str("BOT_TOKEN"),
             admin_ids=list(map(int, env.list("ADMINS"))),
             use_redis=env.bool("USE_REDIS"),
@@ -159,6 +177,7 @@ def load_config(path: str = None, texts_path=None):
             port=env.int('DB_PORT')
         ),
         misc=Miscellaneous(
+            email=env.str('EMAIL'),
             texts=Texts(
                 object_types=texts['object_types'],
                 buttons=ButtonsTexts(
