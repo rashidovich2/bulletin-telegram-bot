@@ -565,8 +565,7 @@ async def revoke_ad(callback: CallbackQuery, callback_data: dict):
             await repo.revoke_ad(ad_id)
 
         await callback.answer()
-        menu = get_menu(cfg)
-        await callback.message.edit_text(text=cfg.misc.texts.messages.revoked_msg, reply_markup=menu)
+        await callback.message.edit_text(text=cfg.misc.texts.messages.revoked_msg)
 
         ad = await repo.get_ad(ad_id)
         if len(ad.media_group) > 0:
@@ -582,6 +581,10 @@ async def revoke_ad(callback: CallbackQuery, callback_data: dict):
             reply_markup=inline_markup,
             disable_web_page_preview=True
         )
+
+        menu = get_menu(cfg)
+
+        await callback.message.reply(cfg.misc.texts.messages.start_msg, reply_markup=menu)
     except MessageCantBeDeleted:
         await callback.message.edit_text(
             text=cfg.misc.texts.messages.cannot_revoke,
