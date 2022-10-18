@@ -565,7 +565,8 @@ async def revoke_ad(callback: CallbackQuery, callback_data: dict):
             await repo.revoke_ad(ad_id)
 
         await callback.answer()
-        await callback.message.edit_text(text=cfg.misc.texts.messages.revoked_msg)
+        menu = get_menu(cfg)
+        await callback.message.edit_text(text=cfg.misc.texts.messages.revoked_msg, reply_markup=menu)
 
         ad = await repo.get_ad(ad_id)
         if len(ad.media_group) > 0:
