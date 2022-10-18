@@ -60,7 +60,11 @@ async def category_navigate(callback: CallbackQuery, state: FSMContext, callback
         inline_markup = await ad_categories_change_keyboard(cfg, ad.id)
 
         await callback.answer()
-        await callback.message.edit_text(text=make_info_text(cfg, ad, callback.from_user), reply_markup=inline_markup)
+        await callback.message.edit_text(
+            text=make_info_text(cfg, ad, callback.from_user),
+            reply_markup=inline_markup,
+            disable_web_page_preview=True
+        )
         await state.reset_state()
         await state.set_state("navigate_category_change")
     else:
@@ -98,12 +102,14 @@ async def category_navigate(callback: CallbackQuery, state: FSMContext, callback
                 or state_name == "wait_cost":
             await callback.message.edit_text(
                 text=make_info_text(cfg, ad, callback.from_user),
-                reply_markup=inline_markup
+                reply_markup=inline_markup,
+                disable_web_page_preview=True
             )
         else:
             await callback.message.answer(
                 text=make_info_text(cfg, ad, callback.from_user),
-                reply_markup=inline_markup
+                reply_markup=inline_markup,
+                disable_web_page_preview=True
             )
 
         await state.reset_state()
@@ -208,6 +214,7 @@ async def wait_description(message: Message, state: FSMContext):
     await message.answer(
         text=make_info_text(cfg, updated_ad, message.from_user),
         reply_markup=inline_markup,
+        disable_web_page_preview=True
     )
 
     await state.reset_state()
@@ -248,6 +255,7 @@ async def wait_cost(message: Message, state: FSMContext):
         await message.answer(
             text=make_info_text(cfg, updated_ad, message.from_user),
             reply_markup=inline_markup,
+            disable_web_page_preview=True
         )
 
         await state.reset_state()
@@ -373,7 +381,8 @@ async def show_photo(callback: CallbackQuery, state: FSMContext, callback_data: 
 
     await callback.message.answer(
         text=make_info_text(cfg, ad, callback.from_user),
-        reply_markup=inline_markup
+        reply_markup=inline_markup,
+        disable_web_page_preview=True
     )
 
 
@@ -402,7 +411,8 @@ async def delete_photo(callback: CallbackQuery, state: FSMContext, callback_data
     await callback.answer()
     await callback.message.edit_text(
         text=make_info_text(cfg, ad, callback.from_user),
-        reply_markup=inline_markup
+        reply_markup=inline_markup,
+        disable_web_page_preview=True
     )
 
 
@@ -472,7 +482,8 @@ async def confirm_ad(callback: CallbackQuery, state: FSMContext, callback_data: 
         await callback.answer()
         await callback.message.edit_text(
             text=cfg.misc.texts.messages.ad_already_published_msg.format(href),
-            reply_markup=delete_markup
+            reply_markup=delete_markup,
+            disable_web_page_preview=True
         )
     else:
         if confirm == "1":
