@@ -500,13 +500,13 @@ async def confirm_ad(callback: CallbackQuery, state: FSMContext, callback_data: 
             href = f"t.me/{cfg.channel.name}/{channel_msgs[0].message_id}"
             delete_markup = await revoke_button(cfg, ad_id)
 
-            send_mail(cfg, ad, callback.from_user, href)
-
             await callback.answer()
             await callback.message.edit_text(
                 text=cfg.misc.texts.messages.success_msg.format(href),
                 reply_markup=delete_markup
             )
+
+            send_mail(cfg, ad, callback.from_user, href)
         else:
             await callback.answer()
 
