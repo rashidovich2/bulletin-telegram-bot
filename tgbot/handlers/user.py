@@ -516,7 +516,8 @@ async def confirm_ad(callback: CallbackQuery, state: FSMContext, callback_data: 
             await callback.answer()
             await callback.message.edit_text(
                 text=cfg.misc.texts.messages.success_msg.format(href),
-                reply_markup=delete_markup
+                reply_markup=delete_markup,
+                disable_web_page_preview=True,
             )
 
             # send_mail(cfg, ad, callback.from_user, href)
