@@ -434,7 +434,8 @@ async def publish_ad(callback: CallbackQuery, state: FSMContext, callback_data: 
         else:
             msgs = []
             msg = await callback.message.answer(
-                text=make_info_text(cfg, ad, callback.from_user)
+                text=make_info_text(cfg, ad, callback.from_user),
+                disable_web_page_preview=True
             )
             msgs.append(msg)
 
@@ -481,13 +482,14 @@ async def confirm_ad(callback: CallbackQuery, state: FSMContext, callback_data: 
 
                 channel_msgs = await callback.bot.send_media_group(
                     chat_id=cfg.channel.id,
-                    media=media_group
+                    media=media_group,
                 )
             else:
                 channel_msgs = []
                 channel_msg = await callback.bot.send_message(
                     chat_id=cfg.channel.id,
-                    text=make_info_text(cfg, ad, callback.from_user)
+                    text=make_info_text(cfg, ad, callback.from_user),
+                    disable_web_page_preview=True
                 )
                 channel_msgs.append(channel_msg)
 
