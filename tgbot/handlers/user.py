@@ -519,7 +519,7 @@ async def confirm_ad(callback: CallbackQuery, state: FSMContext, callback_data: 
                 reply_markup=delete_markup
             )
 
-            send_mail(cfg, ad, callback.from_user, href)
+            # send_mail(cfg, ad, callback.from_user, href)
         else:
             await callback.answer()
 
@@ -576,7 +576,8 @@ async def revoke_ad(callback: CallbackQuery, callback_data: dict):
 
         await callback.message.answer(
             text=make_info_text(cfg, ad, callback.from_user),
-            reply_markup=inline_markup
+            reply_markup=inline_markup,
+            disable_web_page_preview=True
         )
     except MessageCantBeDeleted:
         await callback.message.edit_text(
