@@ -534,7 +534,8 @@ async def confirm_ad(callback: CallbackQuery, state: FSMContext, callback_data: 
             await callback.message.edit_text(text=cfg.misc.texts.messages.confirm_declined)
             await callback.message.answer(
                 text=make_info_text(cfg, ad, callback.from_user),
-                reply_markup=inline_markup
+                reply_markup=inline_markup,
+                disable_web_page_preview=True
             )
 
 
