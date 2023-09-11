@@ -86,9 +86,9 @@ def send_mail(cfg: Config, ad: Ad, from_user: User, ad_href):
 
     if from_user.username is not None:
         user_href = f"t.me/{from_user.username}"
-        text = text + f"Прислано: <a href={user_href}>{name}</a> [TelegramID: <b>{from_user.id}</b>]"
+        text = f"{text}Прислано: <a href={user_href}>{name}</a> [TelegramID: <b>{from_user.id}</b>]"
     else:
-        text = text + f"Прислано: {name} (Не проставлен username) [TelegramID: <b>{from_user.id}</b>]"
+        text = f"{text}Прислано: {name} (Не проставлен username) [TelegramID: <b>{from_user.id}</b>]"
 
     msg = MIMEText(text, 'html')
     msg['Subject'] = f'Новое объявление от {name} на канале {cfg.channel.title}'

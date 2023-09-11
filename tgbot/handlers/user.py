@@ -44,12 +44,9 @@ async def category_navigate(callback: CallbackQuery, state: FSMContext, callback
     repo: Repo = mw_data['repo']
 
     data = await state.get_data()
-    photo_ids = []
-
-    for key, value in data.items():
-        if str(key).startswith("photo_"):
-            photo_ids.append(value)
-
+    photo_ids = [
+        value for key, value in data.items() if str(key).startswith("photo_")
+    ]
     category = callback_data.get("category")
     level = callback_data.get("level")
     ad_id = callback_data.get("ad_id")
@@ -68,7 +65,7 @@ async def category_navigate(callback: CallbackQuery, state: FSMContext, callback
         await state.reset_state()
         await state.set_state("navigate_category_change")
     else:
-        if len(photo_ids) > 0:
+        if photo_ids:
             mg = MediaGroup()
             for photo_id in photo_ids[:9]:
                 mg.attach_photo(photo=photo_id)
@@ -84,22 +81,20 @@ async def category_navigate(callback: CallbackQuery, state: FSMContext, callback
             description=ad.description,
             media_group=media_group
         )
-        if len(ad.media_group) == 0:
-            is_media = "0"
-        else:
-            is_media = "1"
-
+        is_media = "0" if len(ad.media_group) == 0 else "1"
         inline_markup = await ad_navigate(cfg, ad.id, category, is_media)
 
         await callback.answer()
         state_name = await state.get_state()
 
-        if state_name == "wait_new_photo" or state_name == "wait_photo":
+        if state_name in ["wait_new_photo", "wait_photo"]:
             await callback.message.delete_reply_markup()
 
-        if state_name == "navigate_category_change" \
-                or state_name == "wait_description" \
-                or state_name == "wait_cost":
+        if state_name in [
+            "navigate_category_change",
+            "wait_description",
+            "wait_cost",
+        ]:
             await callback.message.edit_text(
                 text=make_info_text(cfg, ad, callback.from_user),
                 reply_markup=inline_markup,
@@ -196,10 +191,7 @@ async def wait_description(message: Message, state: FSMContext):
     ad_id = data.get("ad_id")
     ad = await repo.get_ad(ad_id)
 
-    if len(ad.media_group) == 0:
-        is_media = "0"
-    else:
-        is_media = "1"
+    is_media = "0" if len(ad.media_group) == 0 else "1"
     inline_markup = await ad_navigate(cfg, ad_id, cfg.misc.texts.object_types.index(ad.category), is_media)
 
     updated_ad = await repo.update_ad(
@@ -237,10 +229,7 @@ async def wait_cost(message: Message, state: FSMContext):
             await message.answer("Цена не может быть отрицательной! Введите снова")
             return
 
-        if len(ad.media_group) == 0:
-            is_media = "0"
-        else:
-            is_media = "1"
+        is_media = "0" if len(ad.media_group) == 0 else "1"
         inline_markup = await ad_navigate(cfg, ad_id, cfg.misc.texts.object_types.index(ad.category), is_media)
 
         updated_ad = await repo.update_ad(
@@ -356,7 +345,7 @@ async def wait_new_description(message: Message, state: FSMContext):
 async def wait_new_photo(message: Message, state: FSMContext):
     async with state.proxy() as data:
         file_id = message.photo[-1].file_id
-        additional_data = {str("photo_" + file_id): file_id}
+        additional_data = {str(f"photo_{file_id}"): file_id}
         data.update(**additional_data)
 
 
@@ -371,11 +360,7 @@ async def show_photo(callback: CallbackQuery, state: FSMContext, callback_data: 
     await callback.answer()
     await callback.message.reply_media_group(media=ad.media_group)
 
-    if len(ad.media_group) > 0:
-        is_media = "1"
-    else:
-        is_media = "0"
-
+    is_media = "1" if len(ad.media_group) > 0 else "0"
     ctrg = cfg.misc.texts.object_types.index(ad.category)
     inline_markup = await ad_navigate(cfg, ad.id, ctrg, is_media)
 
@@ -442,13 +427,11 @@ async def publish_ad(callback: CallbackQuery, state: FSMContext, callback_data: 
                 media=media_group
             )
         else:
-            msgs = []
             msg = await callback.message.answer(
                 text=make_info_text(cfg, ad, callback.from_user),
                 disable_web_page_preview=True
             )
-            msgs.append(msg)
-
+            msgs = [msg]
         confirm_markup = await confirm_buttons(cfg, ad_id)
 
         await state.set_state("confirm_ad")
@@ -485,59 +468,49 @@ async def confirm_ad(callback: CallbackQuery, state: FSMContext, callback_data: 
             reply_markup=delete_markup,
             disable_web_page_preview=True
         )
-    else:
-        if confirm == "1":
-            if len(ad.media_group) > 0:
-                media_group = ad.media_group
-                media_group[0]["caption"] = make_info_text(cfg, ad, callback.from_user)
+    elif confirm == "1":
+        if len(ad.media_group) > 0:
+            media_group = ad.media_group
+            media_group[0]["caption"] = make_info_text(cfg, ad, callback.from_user)
 
-                channel_msgs = await callback.bot.send_media_group(
-                    chat_id=cfg.channel.id,
-                    media=media_group,
-                )
-            else:
-                channel_msgs = []
-                channel_msg = await callback.bot.send_message(
-                    chat_id=cfg.channel.id,
-                    text=make_info_text(cfg, ad, callback.from_user),
-                    disable_web_page_preview=True
-                )
-                channel_msgs.append(channel_msg)
-
-            msg_ids = []
-            for msg in channel_msgs:
-                msg_ids.append(msg.message_id)
-
-            await repo.publish_ad(ad_id, msg_ids)
-
-            href = f"t.me/{cfg.channel.name}/{channel_msgs[0].message_id}"
-            delete_markup = await revoke_button(cfg, ad_id)
-
-            await callback.answer()
-            await callback.message.edit_text(
-                text=cfg.misc.texts.messages.success_msg.format(href),
-                reply_markup=delete_markup,
-                disable_web_page_preview=True,
+            channel_msgs = await callback.bot.send_media_group(
+                chat_id=cfg.channel.id,
+                media=media_group,
             )
-
-            # send_mail(cfg, ad, callback.from_user, href)
         else:
-            await callback.answer()
-
-            if len(ad.media_group) > 0:
-                is_media = "1"
-            else:
-                is_media = "0"
-
-            ctrg = cfg.misc.texts.object_types.index(ad.category)
-            inline_markup = await ad_navigate(cfg, ad.id, ctrg, is_media)
-
-            await callback.message.edit_text(text=cfg.misc.texts.messages.confirm_declined)
-            await callback.message.answer(
+            channel_msg = await callback.bot.send_message(
+                chat_id=cfg.channel.id,
                 text=make_info_text(cfg, ad, callback.from_user),
-                reply_markup=inline_markup,
                 disable_web_page_preview=True
             )
+            channel_msgs = [channel_msg]
+        msg_ids = [msg.message_id for msg in channel_msgs]
+        await repo.publish_ad(ad_id, msg_ids)
+
+        href = f"t.me/{cfg.channel.name}/{channel_msgs[0].message_id}"
+        delete_markup = await revoke_button(cfg, ad_id)
+
+        await callback.answer()
+        await callback.message.edit_text(
+            text=cfg.misc.texts.messages.success_msg.format(href),
+            reply_markup=delete_markup,
+            disable_web_page_preview=True,
+        )
+
+                # send_mail(cfg, ad, callback.from_user, href)
+    else:
+        await callback.answer()
+
+        is_media = "1" if len(ad.media_group) > 0 else "0"
+        ctrg = cfg.misc.texts.object_types.index(ad.category)
+        inline_markup = await ad_navigate(cfg, ad.id, ctrg, is_media)
+
+        await callback.message.edit_text(text=cfg.misc.texts.messages.confirm_declined)
+        await callback.message.answer(
+            text=make_info_text(cfg, ad, callback.from_user),
+            reply_markup=inline_markup,
+            disable_web_page_preview=True
+        )
 
 
 async def revoke_ad(callback: CallbackQuery, callback_data: dict):
@@ -568,11 +541,7 @@ async def revoke_ad(callback: CallbackQuery, callback_data: dict):
         await callback.message.edit_text(text=cfg.misc.texts.messages.revoked_msg)
 
         ad = await repo.get_ad(ad_id)
-        if len(ad.media_group) > 0:
-            is_media = "1"
-        else:
-            is_media = "0"
-
+        is_media = "1" if len(ad.media_group) > 0 else "0"
         ctrg = cfg.misc.texts.object_types.index(ad.category)
         inline_markup = await ad_navigate(cfg, ad.id, ctrg, is_media)
 

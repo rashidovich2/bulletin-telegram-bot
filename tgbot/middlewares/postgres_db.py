@@ -17,8 +17,7 @@ class PostgresDbMiddleware(LifetimeControllerMiddleware):
 
     async def post_process(self, obj, data, *args):
         del data["repo"]
-        db = data.get("db")
-        if db:
+        if db := data.get("db"):
             # check the documentation of your pool implementation
             # for proper way of releasing connection
             await self.pool.release(db)

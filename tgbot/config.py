@@ -119,10 +119,9 @@ class Channel:
 
         if channel.type != "channel":
             raise Exception("Set CHANNEL_ID only is Telegram Channel!")
-        else:
-            self.name = channel.username
-            self.title = channel.title
-            self.url = f"t.me/{channel.username}"
+        self.name = channel.username
+        self.title = channel.title
+        self.url = f"t.me/{channel.username}"
 
 
 @dataclass

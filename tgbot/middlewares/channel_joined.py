@@ -9,9 +9,7 @@ channel_joined_member_cache = TTLCache(maxsize=1000, ttl=300)
 
 
 def is_member_in_channel(member: types.ChatMember) -> bool:
-    if member.status == "left" or member.status == "kicked" or member.status == "restricted":
-        return False
-    return True
+    return member.status not in ["left", "kicked", "restricted"]
 
 
 async def get_channel_member(cfg: Config, message: types.Message) -> types.ChatMember:
